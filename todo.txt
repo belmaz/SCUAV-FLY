@@ -1,0 +1,9 @@
+TODO:
+~~~~~~~~~~
+[X] Determine gps accuracy
+[~] Attempt to improve april code detection
+[ ] AprilTag size
+[ ] Waypoints ~ simple goto code?
+[ ] Fix claw code. Original one is a no no. Should be able to be controlled from the pi. 
+
+Note: Create waypoints with apriltags and record its location. 
