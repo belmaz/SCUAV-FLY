@@ -63,6 +63,8 @@ while True:
 		break
 
 vehicle.mode = VehicleMode("LAND")
+vehicle.armed = False
+print "Finished"
 vehicle.close()
 	
 """
