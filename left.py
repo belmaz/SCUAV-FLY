@@ -61,3 +61,9 @@ velx = 0.5
 vely = 0
 velz = 0
 duration = 5
+
+send_body_ned_velocity(velx, vely, velz, duration)
+
+vehicle.mode = VehicleMode("LAND")
+vehicle.armed = False
+vehicle.close()
