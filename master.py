@@ -3,9 +3,11 @@ from pymavlink import mavutil
 
 import bluetooth, sys, time, math
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~BLUETOOTH~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~DRONE~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 BTgood = 0
 alldone = 0
+
+tag = False
 
 altitude = vehicle.location.global_relative_frame.alt
 
@@ -27,7 +29,7 @@ def takeoff(target_alt):
 			print "reached altitude"
 			break
 
-	vehicle.mode = VehicleMode("LAND")
+	#vehicle.mode = VehicleMode("LAND")
 
 def land():
 	vehicle.mode = VehicleMode("LAND")
@@ -52,9 +54,122 @@ def send_ned_velocity(velocity_x, velocity_y, velocity_z, duration):
         vehicle.send_mavlink(msg)
         time.sleep(1)
 
+def gpsfly(doClaw):
+	cubesleft = 2
+	wpstage = 1
+	doneflight = False
+	point1 = LocationGlobalRelative(28.600780, -81.19812, 20) #change this
+	point2 = LocationGlobalRelative(28.60085, -81.19802, 20) #change this
+	takeoff(1)
+	while not doneflight:
+		if stage == 1: # takeoff and fly to pickup point1
+			vehicle.simple_goto(point1, groundspeed = 1)
+			time.sleep(1)
+			stage = 2
+		else:
+			if stage == 2:
+				vehicle.simple_goto(point2, groundspeed = 1)
+				time.sleep(1)
+				stage = 3
+			else:
+				if stage == 3:
+					if (doClaw):
+						# lower and pick up a cube then get back to flight altitude
+						#insert camera and claw stuff here
+						c = ser.readline()
+						if(c == 'l'):
+							send_ned_velocity(0, -0.01, 0, 0.01)
+						if(c == 'r'):
+							send_ned_velocity(0, 0.01, 0, 0.01)
+						if(c == 'f'):
+							send_ned_velocity(0.01, 0, 0, 0.01)
+						if(c == 'b'):
+							send_ned_velocity(-0.01, 0, 0, 0.01)
+						if(c == 'a'):
+							send_ned_velocity(0, 0, -0.01, 0.01)
+
+						# when we are done grabbing and lifting up, set stage = 4
+					else: 
+						stage = 4 # skip for no claw test
+				else:
+					if stage == 4:
+						# fly to drop zone
+						vehicle.simple_goto(point1, groundspeed = 1)
+						time.sleep(1)
+						stage = 5
+					else:
+						if stage == 5:
+							if (doClaw):
+								# place the cube, fly back up to altitude
+
+								cubesleft = cubesleft - 1
+								if (cubesleft == 0):
+									stage = 6
+								else:
+									stage = 1
+						else:
+							if stage == 6:
+								# final stage, land at home
+								vehicle.mode = VehicleMode("RTL")
+								doneflight = True
+
+		#insert cmaera and claw stuff here.
+		#check for blocks
+
+		#if no tags are found after few seconds, vehicle.mode(rtl)
+		
+
+
+def claw(tagfound):
+	global tag
+
+	if(tagfound == True and distance == 5):
+		serp.write('1')
+	if(tagfound == False):
+		serp.write('0')
+	else:
+		print("nope")
+
+def tagfunc():
+	global tag
+
+	ser.flushInput()
+	ch = ser.readline()
+	print ch
+
+	if(ch[0] == 'l'):
+		res = ord(ch[0]) - 107
+		print res #left
+		ser.write(res)
+	else:
+		if(ch[0] == 'r'):
+			res = ord(ch[0]) - 112
+			print res #right
+			ser.write(res)
+		else:
+			if(ch[0] == 'f'):
+				res = ord(ch[0]) - 99
+				print res #fwd
+				ser.write(res)
+			else:
+				if(ch[0] == 'b'):
+					res = ord(ch[0]) - 94
+					print res #back
+					ser.write(res)
+				else:
+					if(ch[0] == 'a'):
+						res = ord(ch[0]) - 97
+						tag = True
+						print res #found
+						ser.write(res)
+					else:
+						print "decap mode engaged!!!"
+	return tag
 
 
 
+
+#~~~~~~~~~~~~~~~~~~~~~~~~BLUETOOTH~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 def connectBT():
 	# this is the setup routine that must be called first.
 	# It will halt your program execution until it connects to your phone, etc.
@@ -107,13 +222,20 @@ def dispatchBT():
 				takeoff(1)
 			if data[0] == 'd': #down land button
 				land()
+			if data[0] == 'y': # follow WAYPOINTS!
+				gpsfly(True)
+			if data[0] == 'm': # follow WAYPOINTS!
+				gpsfly(False)
 		except:
 			pass
 			#print("Yippeee!")
 	else:
 		print("There is no bt connection.  Make sure you run connectBT() first")
 
+#~~~~~~~~~~~~~~~~~~~~~~~MAIN~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 vehicle = connect('/dev/ttyACM0', baud=57600, wait_ready=True)
+ser = serial.Serial('/dev/ttyACM1', baud=9600, wait_ready=True)
+serp = serial.Serial('/dev/ttyACM2', baud=9600, wait_ready=True)
 
 home_position_set = True
 vehicle.armed = False
