@@ -1,7 +1,7 @@
 import serial
 
 ser = serial.Serial('/dev/ttyACM0', 9600)  # Arduiino baudrate
-
+serp = serial.Serial('/dev/ttyACM1', 9600)
 tag = False
 
 #claw fuction:
@@ -9,10 +9,10 @@ tag = False
 def claw_function(tagFound):
 	global tag
 	if (tagFound == True and distance <= 5):
-		ser.write('1') # close the claw
+		serp.write('1') # close the claw
 
 	if(tagFound == False):
-		ser.write('0') #open the claw and keep it open 
+		serp.write('0') #open the claw and keep it open 
 
 	else:
 		print("Invalid command!")	# either no connection or something went wrong!
