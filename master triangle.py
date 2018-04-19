@@ -60,7 +60,7 @@ def gpsfly(doClaw):
 	doneflight = False
 	global tag
 
-	counter = 100
+	counter = 0
 	#point1 = LocationGlobalRelative(28.600780, -81.19812, 20) #change this
 	#point2 = LocationGlobalRelative(28.60085, -81.19802, 20) #change this
 	point1 = LocationGlobalRelative(28.59983, -81.19652, 20) #change this
@@ -74,51 +74,63 @@ def gpsfly(doClaw):
 			stage = 2
 			clawDoYourThang() # tell claw to enter search and grab mode for stage 2
 			grabstate = 1 # initialize grab state 
+			print("switch to stage 2")
 		else:
 			####################### stage 2 ###########################
 			if stage == 2:
 				if (doClaw):
 					ser.flushInput()
 					c = ser.readline()
+					# ~~~~~~~~~~~~~~~~~~ state 1 ~~~~~~~~~~~~~~~~~~~~
 					if (grabstate ==1 ):
 						# - searching for tag (keep flying to gps location, perhaps slightly vary altitude)
 						vehicle.simple_goto(point1, groundspeed = 1)
 
 						# NOTE! WE ARRE NOT MAINTAINING ALTITUDE, just returning to gps
-
+						counter = counter +1
+						if(counter > 4):
+							#counter for giving tries to find tags, if passed the counter, end.
+							stage = 6
 						if(len(c) not 0): # did we get anything from the openmv cam?
 							grabstate = 2
 					else:
+					# ~~~~~~~~~~~~~~~~~~ state 2 ~~~~~~~~~~~~~~~~~~~~
 						if (grabstate == 2):
 							# - centering tag
 							if (len(c) == 0):
 								# we didn't get anything from the camera
 								grabstate = 1
-							if(c == 'l'):
-								send_ned_velocity(0, -0.01, 0, 0.01)
-							if(c == 'r'):
-								send_ned_velocity(0, 0.01, 0, 0.01)
-							if(c == 'f'):
-								send_ned_velocity(0.01, 0, 0, 0.01)
-							if(c == 'b'):
-								send_ned_velocity(-0.01, 0, 0, 0.01)
-							if(c == 'a'):
-								#tag = True
-								theLowAltitude = .3333 # meters
-								if(vehicle.location.global_relative_frame.alt > theLowAltitude):
-									send_ned_velocity(0, 0, -0.01, 0.01)
-								else:
-									land()
-									grabstate = 3
-							#maybe
 							else:
-								grabstate = 1
+								if(c == 'l'):
+									send_ned_velocity(0, -0.01, 0, 0.01)
+								else:
+									if(c == 'r'):
+										send_ned_velocity(0, 0.01, 0, 0.01)
+									else:
+										if(c == 'f'):
+											send_ned_velocity(0.01, 0, 0, 0.01)
+										else:
+											if(c == 'b'):
+												send_ned_velocity(-0.01, 0, 0, 0.01)
+											else:
+												if(c == 'a'):
+													#tag = True
+													theLowAltitude = .3333 # meters
+													if(vehicle.location.global_relative_frame.alt > theLowAltitude):
+														send_ned_velocity(0, 0, -0.01, 0.01)
+													else:
+														land()
+														grabstate = 3
+												#maybe
+												else:
+													grabstate = 1
 						else:
+					# ~~~~~~~~~~~~~~~~~~ state 3 ~~~~~~~~~~~~~~~~~~~~
 							if (grabstate == 3):
 								# - block grabbed, takeoff
 								takeoff(1)
 								stage = 3		#	- assume we grabbed block, next stage
-
+								print("switch to stage 3")
 """						# in my humble opine, we need several states 
 						# - searching for tag (keep flying to gps location, perhaps slightly vary altitude)
 						# - centering tag
@@ -148,6 +160,7 @@ def gpsfly(doClaw):
 					# (we have cube, we are at altitude
 					takeoff(1)
 					stage = 4
+					print("switch to stage 4")
 				else:
 					if stage == 4:
 						####################### stage 4 ###########################
@@ -156,6 +169,7 @@ def gpsfly(doClaw):
 						vehicle.simple_goto(point2, groundspeed = 1)
 						time.sleep(1)
 						stage = 5
+						print("switch to stage 5")
 					else:
 						if stage == 5:
 							####################### stage 5 ###########################
@@ -165,14 +179,17 @@ def gpsfly(doClaw):
 								cubesleft = cubesleft - 1
 								if (cubesleft == 0):
 									stage = 6
+									print("switch to stage 6")
 								else:
 									stage = 1
 							else:
 								stage = 6
+								print("switch to stage 6")
 						####################### stage 6 ###########################
 						else:
 							if stage == 6:
 								# final stage, land at home
+								print("ending mission")
 								vehicle.mode = VehicleMode("RTL")
 								doneflight = True
 								Vehicle.armed = False
