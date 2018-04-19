@@ -21,6 +21,7 @@ def disarmIt():
 
 def takeoff(target_alt):
 	print("------------------> TAKEOFF  <-----------------")
+	vehicle.armed = True
 	vehicle.simple_takeoff(target_alt)
 
 	while True:
@@ -65,12 +66,14 @@ def gpsfly(doClaw):
 	#point2 = LocationGlobalRelative(28.60085, -81.19802, 20) #change this
 	point1 = LocationGlobalRelative(28.59983, -81.19652, 20) #change this
 	point2 = LocationGlobalRelative(28.59984, -81.19641, 20) #change this
+	vehicle.armed = True
 	takeoff(1)
 	while not doneflight:
 			####################### stage 1 ###########################
 		if stage == 1: # takeoff and fly to pickup point1
-			vehicle.simple_goto(point1, groundspeed = 1)
-			time.sleep(1)
+			vehicle.airspeed(0.1)
+			vehicle.simple_goto(point1)
+			time.sleep(5)
 			stage = 2
 			clawDoYourThang() # tell claw to enter search and grab mode for stage 2
 			grabstate = 1 # initialize grab state 
@@ -84,7 +87,7 @@ def gpsfly(doClaw):
 					# ~~~~~~~~~~~~~~~~~~ state 1 ~~~~~~~~~~~~~~~~~~~~
 					if (grabstate ==1 ):
 						# - searching for tag (keep flying to gps location, perhaps slightly vary altitude)
-						vehicle.simple_goto(point1, groundspeed = 1)
+						vehicle.simple_goto(point1)
 
 						# NOTE! WE ARRE NOT MAINTAINING ALTITUDE, just returning to gps
 						counter = counter +1
@@ -385,4 +388,3 @@ while not alldone:
 	dispatchBT()
 
 closeBT()
-
