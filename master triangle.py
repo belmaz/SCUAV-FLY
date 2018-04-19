@@ -90,9 +90,11 @@ def gpsfly(doClaw):
 						counter = counter +1
 						if(counter > 4):
 							#counter for giving tries to find tags, if passed the counter, end.
+							print("~~~~~~~~~~WE GAVE UP TRYING GRAB STATE 1 ~~~~~~~~~~")
 							stage = 6
 						if(len(c) not 0): # did we get anything from the openmv cam?
 							grabstate = 2
+							print(".....Switching to grabstate 2.....")
 					else:
 					# ~~~~~~~~~~~~~~~~~~ state 2 ~~~~~~~~~~~~~~~~~~~~
 						if (grabstate == 2):
@@ -100,30 +102,38 @@ def gpsfly(doClaw):
 							if (len(c) == 0):
 								# we didn't get anything from the camera
 								grabstate = 1
+								print("~~~~ WE DIDnT GET ANYTHING from the cam - switch back to STATE 1")
 							else:
 								if(c == 'l'):
+									print("left")
 									send_ned_velocity(0, -0.01, 0, 0.01)
 								else:
 									if(c == 'r'):
+										print("right")
 										send_ned_velocity(0, 0.01, 0, 0.01)
 									else:
 										if(c == 'f'):
+											print("fwd")
 											send_ned_velocity(0.01, 0, 0, 0.01)
 										else:
 											if(c == 'b'):
+												print("back")
 												send_ned_velocity(-0.01, 0, 0, 0.01)
 											else:
 												if(c == 'a'):
 													#tag = True
+													print("on target baby")
 													theLowAltitude = .3333 # meters
 													if(vehicle.location.global_relative_frame.alt > theLowAltitude):
 														send_ned_velocity(0, 0, -0.01, 0.01)
 													else:
+														print("INITIATING LANDING to GRAB a Cube....")
 														land()
 														grabstate = 3
 												#maybe
 												else:
 													grabstate = 1
+													print("~~~~ WE GOT SOMETHING OTHER THAN A COMMAND - switch back to STATE 1")
 						else:
 					# ~~~~~~~~~~~~~~~~~~ state 3 ~~~~~~~~~~~~~~~~~~~~
 							if (grabstate == 3):
@@ -375,3 +385,4 @@ while not alldone:
 	dispatchBT()
 
 closeBT()
+
