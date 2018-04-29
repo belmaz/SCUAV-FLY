@@ -1,2 +1,2 @@
 # SCUAV-FLY
-Pathfinding algorithms along with camera stuff. 
+Pathfinding algorithms along with OpenMV M7 Camera. 
